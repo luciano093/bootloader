@@ -1,21 +1,61 @@
-use core::{ops::{Deref, DerefMut}, ptr::NonNull};
+use core::{fmt::{self, Write}, ops::{Deref, DerefMut}, ptr::NonNull};
 
 use spin::{Lazy, Mutex};
 
-
 static VGA_RAW: Lazy<spin::Mutex<VgaBufferSync>> = Lazy::new(|| Mutex::new(VgaBufferSync(unsafe{ VgaBufferRaw::new() })));
+
+static DEFAULT_COLOR: u8 = 0x0F;
+
+#[macro_export]
+macro_rules! vga_print {
+    ($($arg:tt)*) => {{
+        use kernel::vga::vga_buffer::VgaBuffer;
+        use core::fmt::Write;
+
+        VgaBuffer::print(format_args!($($arg)*));
+    }};
+}
+
+#[macro_export]
+macro_rules! vga_println {
+    () => {
+        use kernel::vga::vga_buffer::VgaBuffer;
+        VgaBuffer::write_character('\n');
+    };
+
+    ($($arg:tt)*) => {{
+        use kernel::vga::vga_buffer::VgaBuffer;
+        use core::fmt::Write;
+
+        VgaBuffer::print(format_args!($($arg)*));
+        VgaBuffer::write_character('\n');
+    }};
+}
+
 
 
 pub struct VgaBuffer;
 
 impl VgaBuffer {
     /// Writes a '?' character in place of characters that are not ascii.
-    pub fn write_character(char: char, color: u8) {
-        let byte = if char.is_ascii() { char as u8 } else { b'?' };
-
+    pub fn write_character_with_color(char: char, color: u8) {
         unsafe {
-            VGA_RAW.lock().write_character(byte, color);
+            VGA_RAW.lock().write_character_with_color(char, color);
         }
+    }
+
+    pub fn write_character(char: char) {
+        unsafe {
+            VGA_RAW.lock().write_character(char);
+        }
+    }
+
+    pub fn print(args: fmt::Arguments) {
+        let _ = VGA_RAW.lock().write_fmt(args);
+    }
+
+    pub fn println(args: fmt::Arguments) {
+        let _ = VGA_RAW.lock().write_fmt(args);
     }
 }
 
@@ -56,11 +96,29 @@ impl VgaBufferRaw {
         }
     }
 
-    pub unsafe fn write_character(&mut self, char: u8, color: u8) {
+    pub unsafe fn write_str_with_color(&mut self, str: &str, color: u8) {
+        for char in str.chars() {
+            unsafe { self.write_character_with_color(char, color); }
+        }
+    }
+
+    pub unsafe fn write_character(&mut self, char: char) {
+        unsafe { self.write_character_with_color(char, DEFAULT_COLOR); }
+    }
+
+    pub unsafe fn write_character_with_color(&mut self, char: char, color: u8) {
+        if char == '\n' {
+            self.advance_line();
+            self.cursor = 0;
+            return;
+        }
+
+        let byte = if char.is_ascii() { char as u8 } else { b'?' };
+
         let offset = (80  * self.line as isize + self.cursor as isize) * 2;
 
         unsafe {
-            self.vga.offset(offset).write_volatile(char);
+            self.vga.offset(offset).write_volatile(byte);
             self.vga.offset(offset  + 1).write_volatile(color);
         }
 
@@ -84,5 +142,13 @@ impl VgaBufferRaw {
         if self.line >= 25 {
             self.line = 0;
         }
+    }
+}
+
+impl Write for VgaBufferRaw {
+    fn write_str(&mut self, str: &str) -> core::fmt::Result {
+        unsafe { self.write_str_with_color(str, DEFAULT_COLOR); }
+
+        Ok(())
     }
 }

@@ -3,7 +3,7 @@
 
 use core::panic::PanicInfo;
 
-use kernel::vga::vga_buffer::VgaBuffer;
+use kernel::{vga_print, vga_println};
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -13,10 +13,12 @@ fn panic(_info: &PanicInfo) -> ! {
 #[unsafe(no_mangle)]
 #[unsafe(link_section = ".text._start")]
 pub extern "C" fn _start() -> ! {
-    loop {
-        VgaBuffer::write_character('R', 0x04);
-        VgaBuffer::write_character('U', 0x04);
-        VgaBuffer::write_character('S', 0x04);
-        VgaBuffer::write_character('T', 0x04);
-    }
+    vga_println!("My string: {}", 1);
+    vga_println!("My string: {}", 1);
+    vga_print!("My string: {}", 1);
+    vga_print!(" + 2 = 3");
+    vga_println!();
+    vga_print!(":D");
+    
+    loop { }
 }
