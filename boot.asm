@@ -24,7 +24,7 @@ read_bootloader:
     mov ax, 0x1000
     mov es, ax
     mov ah, 2 ; Read sector code
-    mov al, 2 ; Number of sectors to read
+    mov al, 3 ; Number of sectors to read
     mov ch, 0 ; cylinder number, which cylinder on disl
     mov cl, 2 ; Sectpr number, which sector to start reading from
     mov dh, 0 ; Head number, 0 for top side of disk
@@ -72,7 +72,7 @@ protected_mode_start:
     ; Copy kernel from 0x10000 to 0x100000 (previous 16bit had not access to memory so high up)
     mov esi, 0x10000 ; Source index (where to read from)
     mov edi, 0x100000 ; Destination index (where to write to)
-    mov ecx, 512 * 2 ; Size: sectors * 512 bytes (count)
+    mov ecx, 512 * 3 ; Size: sectors * 512 bytes (count)
     rep movsb ; Copy byte by byte (movsb: move string byte) (rep: repeat)
 
     ; Jump to kernel
