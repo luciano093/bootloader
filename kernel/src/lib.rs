@@ -2,3 +2,4 @@
 
 pub mod vga;
 pub mod asm_utils;
+pub mod interrupts;
