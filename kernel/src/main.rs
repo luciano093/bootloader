@@ -18,7 +18,10 @@ pub extern "C" fn _start() -> ! {
     vga_print!("My string: {}", 1);
     vga_print!(" + 2 = 3");
     vga_println!();
+    vga_println!();
     vga_print!(":D");
+
+
     
     loop { }
 }
