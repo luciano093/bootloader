@@ -11,9 +11,7 @@ static DEFAULT_COLOR: u8 = 0x0F;
 #[macro_export]
 macro_rules! vga_print {
     ($($arg:tt)*) => {{
-        use kernel::vga::vga_buffer::VgaBuffer;
-        use core::fmt::Write;
-
+        use $crate::vga::vga_buffer::VgaBuffer;
         VgaBuffer::print(format_args!($($arg)*));
     }};
 }
@@ -21,13 +19,12 @@ macro_rules! vga_print {
 #[macro_export]
 macro_rules! vga_println {
     () => {{
-        use kernel::vga::vga_buffer::VgaBuffer;
+        use $crate::vga::vga_buffer::VgaBuffer;
         VgaBuffer::write_character('\n');
     }};
 
     ($($arg:tt)*) => {{
-        use kernel::vga::vga_buffer::VgaBuffer;
-        use core::fmt::Write;
+        use $crate::vga::vga_buffer::VgaBuffer;
 
         VgaBuffer::print(format_args!($($arg)*));
         VgaBuffer::write_character('\n');
